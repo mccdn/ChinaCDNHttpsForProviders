@@ -17,3 +17,6 @@ target/
 
 .vs/
 **/packages/*
+**/obj/**/*
+**/bin/**/*
+**/gen/**/*
