@@ -6,12 +6,15 @@
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using System.Configuration;
+    using Microsoft.Azure.KeyVault.Models;
+    using System.IO;
+    using System.Text;
 
     class Program
     {
         static void Main(string[] args)
         {
-            string CredentialKeyVaultAccessCertThumbprint = ConfigurationManager.AppSettings["CredentialKeyVaultAccessCertThumbprint"]; 
+            string CredentialKeyVaultAccessCertThumbprint = ConfigurationManager.AppSettings["CredentialKeyVaultAccessCertThumbprint"];
             string CredentialKeyVaultAuthClientId = ConfigurationManager.AppSettings["CredentialKeyVaultAuthClientId"];
             string sslCertUri = ConfigurationManager.AppSettings["sslCertUri"];
 
@@ -27,6 +30,30 @@
 
             Console.WriteLine(certContentSecret.ContentType);
             Console.WriteLine(certContentSecret.Value);
+
+            if (string.CompareOrdinal(certContentSecret.ContentType, CertificateContentType.Pem) == 0)
+            {
+                //Pem File.
+                using (FileStream fs = new FileStream($"{Guid.NewGuid()}.pem", FileMode.Create))
+                {
+                    byte[] content = Encoding.UTF8.GetBytes(certContentSecret.Value);
+                    fs.Write(content, 0, content.Length);
+                    fs.Flush();
+                }
+            }
+            else if (string.CompareOrdinal(certContentSecret.ContentType, CertificateContentType.Pfx) == 0)
+            {
+                using (FileStream fs = new FileStream($"{Guid.NewGuid()}.pfx", FileMode.Create))
+                {
+                    byte[] content = Convert.FromBase64String(certContentSecret.Value);
+                    fs.Write(content, 0, content.Length);
+                    fs.Flush();
+                }
+            }
+            else
+            {
+                throw new FormatException("Invalid certificate format");
+            }
         }
 
         static private KeyVaultClient InitWithCert(string authClientId, string authThumbprint)
