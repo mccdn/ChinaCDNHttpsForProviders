@@ -16,19 +16,6 @@ import java.util.Enumeration;
 import java.util.concurrent.Executors;
 
 public class JavaKeyVaultAuthenticator {
-
-	/**
-	 * Do certificate based authentication using pfx file
-	 * 
-	 * @param path
-	 *            to pfx file
-	 * @param pfxPassword
-	 *            the password to the pfx file, this can be empty if thats the value
-	 *            given when it was created
-	 * @param clientId
-	 *            also known as applicationId which is received after app
-	 *            registration
-	 */
 	public KeyVaultClient getAuthentication(String path, String pfxPassword, String clientId)
 			throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException,
 			NoSuchProviderException, IOException {
@@ -37,7 +24,7 @@ public class JavaKeyVaultAuthenticator {
 
 		PrivateKey privateKey = certificateKey.getKey();
 
-		// Do certificate based authentication
+		// 基于证书的认证
 		KeyVaultClient keyVaultClient = new KeyVaultClient(new KeyVaultCredentials() {
 
 			@Override
@@ -48,7 +35,6 @@ public class JavaKeyVaultAuthenticator {
 					context = new AuthenticationContext(authorization, false, Executors.newFixedThreadPool(1));
 					AsymmetricKeyCredential asymmetricKeyCredential = AsymmetricKeyCredential.create(clientId,
 							privateKey, certificateKey.getCertificate());
-					// pass null value for optional callback function and acquire access token
 					AuthenticationResult result = context.acquireToken(resource, asymmetricKeyCredential, null).get();
 
 					return result.getAccessToken();
@@ -60,15 +46,8 @@ public class JavaKeyVaultAuthenticator {
 		});
 		return keyVaultClient;
 	}
-
-	/**
-	 * Read pfx file and get privateKey
-	 * 
-	 * @param path
-	 *            pfx file path
-	 * @param password
-	 *            the password to the pfx file
-	 */
+	
+	//读取PFX证书
 	public static KeyCert readPfx(String path, String password) throws NoSuchProviderException, KeyStoreException,
 			IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException {
 
@@ -77,31 +56,31 @@ public class JavaKeyVaultAuthenticator {
 
 			boolean isAliasWithPrivateKey = false;
 
-			// Access Java keystore
+			// 访问Java KeyStore
 			final KeyStore store = KeyStore.getInstance("pkcs12", "SunJSSE");
 
-			// Load Java Keystore with password for access
+			// 加载Java KeyStore
 			store.load((InputStream) stream, password.toCharArray());
 
-			// Iterate over all aliases to find the private key
+			// 枚举所有Aliases来查找Private Key
 			Enumeration<String> aliases = store.aliases();
 			String alias = "";
 			while (aliases.hasMoreElements()) {
 				alias = aliases.nextElement();
 				System.out.println(alias);
-				// Break if alias refers to a private key because we want to use that
-				// certificate
+
 				if (isAliasWithPrivateKey = store.isKeyEntry(alias)) {
 					break;
 				}
 			}
 
 			if (isAliasWithPrivateKey) {
-				// Retrieves the certificate from the Java keystore
+				
+				//从Java KeyStore中获取证书
 				X509Certificate certificate = (X509Certificate) store.getCertificate(alias);
 				System.out.println("the alias is: " + alias);
 
-				// Retrieves the private key from the Java keystore
+				//从Java KeyStore中获取私钥
 				PrivateKey key = (PrivateKey) store.getKey(alias, password.toCharArray());
 
 				keyCert.setCertificate(certificate);
