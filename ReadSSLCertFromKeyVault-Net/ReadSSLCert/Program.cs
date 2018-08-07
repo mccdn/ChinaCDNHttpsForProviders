@@ -23,11 +23,11 @@
             //此字段为证书的全路径，取自BindCert Api的Certificate字段
             string sslCertUri;
 
-            //此字段为供应商端的Provider Id，，取自BindCert Api的Certificate字段
+            //此字段为供应商端的Provider Id，，取自BindCert Api的EndpointId字段
             string endpointId;
 
             //从BindCert HttpRequest中获取参数。
-            ReadParamtersFromBindCertHttpRequest(out credentialKeyVaultAuthClientId, out sslCertUri, out endpointId);
+            ReadParametersFromBindCertHttpRequest(out credentialKeyVaultAuthClientId, out sslCertUri, out endpointId);
 
             //通过本地AAD证书初始化密钥保管库的客户端
             var keyVaultClient = InitKeyVaultWithAADCert(credentialKeyVaultAuthClientId, credentialKeyVaultAccessCertThumbprint);
@@ -44,7 +44,7 @@
         /// <param name="authClientId">此字段为AAD的ClientId，实际应取自BindCert Api的ClientID</param>
         /// <param name="sslCertUri">此字段为证书的全路径，适应应取自BindCert Api的Certificate字段</param>
         /// <param name="endpointId">供应商端的Endpoint Id.适应应取自BindCert Api的EndpointId字段</param>
-        static void ReadParamtersFromBindCertHttpRequest(out string authClientId, out string sslCertUri, out string endpointId)
+        static void ReadParametersFromBindCertHttpRequest(out string authClientId, out string sslCertUri, out string endpointId)
         {
             ///// 以下为Azure CDN Service 调用BindCert 传输的参数示例：
             ////{ 
