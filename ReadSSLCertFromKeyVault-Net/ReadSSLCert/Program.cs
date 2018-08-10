@@ -9,6 +9,7 @@
     using Microsoft.Azure.KeyVault.Models;
     using System.IO;
     using System.Text;
+    using System.Diagnostics;
 
     class Program
     {
@@ -27,7 +28,7 @@
             string endpointId;
 
             //从BindCert HttpRequest中获取参数。
-            ReadParametersFromBindCertHttpRequest(out credentialKeyVaultAuthClientId, out sslCertUri, out endpointId);
+            ReadParametersFromBindCertHttpRequest(out credentialKeyVaultAuthClientId, out sslCertUri, out endpointId);         
 
             //通过本地AAD证书初始化密钥保管库的客户端
             var keyVaultClient = InitKeyVaultWithAADCert(credentialKeyVaultAuthClientId, credentialKeyVaultAccessCertThumbprint);
@@ -61,6 +62,10 @@
 
             //供应商端的Endpoint Id.实际应取自BindCert Api的EndpointId字段
             endpointId = Guid.NewGuid().ToString();
+
+            Console.WriteLine("Read parameter information from configuration");
+            Console.WriteLine($"AuthClientId:{authClientId}");
+            Console.WriteLine($"SSLCertUri:{sslCertUri}");
         }
 
 
@@ -71,11 +76,12 @@
         /// <param name="sslCertUri">SSL Cert的Uri路径，此路径从BindCert的参数Certificate中获取到</param>
         static async void GetAndDownLoadSSLCert(KeyVaultClient keyVaultClient, string sslCertUri)
         {
+            Console.WriteLine("Get Certificate from KeyVault and save it to Local");
             var certContentSecret = await keyVaultClient.GetSecretAsync(sslCertUri).ConfigureAwait(false);
+            Console.WriteLine($"Certificate Content Type：{certContentSecret.ContentType}");
+            Console.WriteLine($"Certficate Content：{certContentSecret.Value}");
 
-            Console.WriteLine(certContentSecret.ContentType);
-            Console.WriteLine(certContentSecret.Value);
-
+            Console.WriteLine("Save certificate to local");
             if (string.CompareOrdinal(certContentSecret.ContentType, CertificateContentType.Pem) == 0)
             {
                 //Pem文件.
@@ -100,6 +106,9 @@
             {
                 throw new FormatException("Invalid certificate format");
             }
+
+            Console.WriteLine("Save to local sucessful.");
+            Console.WriteLine("Press any key to exit...............");
         }
 
         /// <summary>
@@ -110,6 +119,7 @@
         /// <returns>获取密钥保管库的客户端。</returns>
         static private KeyVaultClient InitKeyVaultWithAADCert(string authClientId, string authThumbprint)
         {
+            Console.WriteLine("Initialize keyVault Client by AAD certificate installed in LocalMachine");
             X509Certificate2 cert = GetCertificateByThumbprint(authThumbprint, StoreName.My, StoreLocation.LocalMachine);
 
             ClientAssertionCertificate assertionCert = new ClientAssertionCertificate(authClientId, cert);
