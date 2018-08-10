@@ -28,8 +28,11 @@ public class RetrieveSSLCertSample {
 			Properties props = new Properties();
 			props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("azure.properties"));
 
+			System.out.println("Read parameter information from resource");
+
 		    //此字段为AAD的ClientId，应取自BindCert Api的ClientID
 			final String clientId = props.getProperty("CredentialKeyVaultAuthClientId");
+			System.out.println("AuthClientId: "+clientId);
 			
 			//AAD证书的Password
 			final String pfxPassword = props.getProperty("pfxPassword");
@@ -39,11 +42,15 @@ public class RetrieveSSLCertSample {
 			
             //此字段为SSL证书的全路径，应取自BindCert Api的Certificate字段
 			final String certUri = props.getProperty("sslCertUri");
+			System.out.println("SSLCertUri: "+certUri);
+
 			
             //通过本地AAD证书初始化密钥保管库的客户端
+			System.out.println("Initialize keyVault Client by AAD certificate");
 			KeyVaultClient keyVaultClient = InitKeyVaultWithAADCert(path,pfxPassword,clientId);			
 			
 			//通过密钥保管库客户端获取证书并保存到本地。
+			System.out.println("Get Certificate from KeyVault and save it to Local");
             GetAndDownLoadSSLCert(keyVaultClient, certUri);		
 		
 		} catch (Exception e) {
