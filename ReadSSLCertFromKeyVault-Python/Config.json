@@ -1,0 +1,6 @@
+{
+  "client_id": "93e156b2-cdf2-41c7-b49e-51963adb7b80",
+  "aad_cert_thumbprint": "e1934eed6957b11f6cbe3fc49d97e4e6a266cf88",
+  "aad_cert_path": "HttpsApiTestCert.pem",
+  "sslcert_url": "https://httpsapitest.vault.azure.cn/secrets/2057a5c8-a847-4c80-8791-4565dafbe2d2/8137409588b24b15aa1f35bfbddae283"
+}
