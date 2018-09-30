@@ -7,11 +7,13 @@ from urllib.parse import urlparse
 from azure.keyvault import KeyVaultClient, KeyVaultAuthentication
 from azure.keyvault import KeyVaultId
 
+#此方法用于加载AAD证书（PEM格式）
 def get_private_key(filename):
     with open(filename, 'r') as pem_file:
         private_pem = pem_file.read()
     return private_pem
 
+#此方法用于提取KeyVault Url的baseurl，secretVale，secret version
 def get_keyvaultparts(secretidentifier):
     url = urlparse(secretidentifier)
     keyVaultUrl = url.scheme + "://" + url.netloc
@@ -21,22 +23,32 @@ def get_keyvaultparts(secretidentifier):
     elif len(vauleVersion) == 3:
         return keyVaultUrl,vauleVersion[2],''
 
-"""Read SSL Cert example."""
-sample_parameters = {}
+"""自KeyVault上获取SSL证书的例子."""
 
+#用于读取用来测试的配置数据，此例子中为读取配置文件获取参数信息
+# 以下为Azure CDN Service 调用BindCert 传输的参数示例：
+#{ 
+#“EndpointId”: “cc9706ec-7f99-4df9-83a9-4820931a2552”, 
+#“Certificate”: “https://transit-cdn-cert.vault.azure.cn/certificates/cc9706ec-7f99-4df9-83a9-4820931a2552” 
+#“ClientID”: “5451E51E-7E8D481C-BD44-41E25B580F26” 
+#}
+sample_parameters = {}
 with open('Config.json', 'r') as f:
     parameters = f.read()
 sample_parameters = json.loads(parameters)
 
+#此字段为AAD的ClientId，应取自BindCert Api的ClientID
 client_id = sample_parameters['client_id']
+
+#此字段为CDN供应商AAD证书的Thumbprint
 client_cert_thumbprint =sample_parameters['aad_cert_thumbprint']
+
+#此字段为CDN供应商AAD证书的文件路径
 client_cert = get_private_key(sample_parameters['aad_cert_path'])
+
+#此字段为证书的全路径，应取自BindCert Api的Certificate字段
 sslcert_url = sample_parameters['sslcert_url']
 
-keyvault_parts = get_keyvaultparts(sslcert_url)
-print(keyvault_parts)
-
-# create a callback to supply the token type and access token on request
 def adal_callback(server, resource, scope):
     context = adal.AuthenticationContext(server)
     token = context.acquire_token_with_client_certificate(resource,
@@ -45,16 +57,18 @@ def adal_callback(server, resource, scope):
     client_cert_thumbprint)
     return token['tokenType'], token['accessToken']
 
-# create a KeyVaultAuthentication instance which will callback to the
-# supplied adal_callback
 auth = KeyVaultAuthentication(adal_callback)
 
-# create the KeyVaultClient using the created KeyVaultAuthentication
-# instance
 client = KeyVaultClient(auth)
+
+#获取SSL证书
+#此方法用于提取KeyVault Url的baseurl，secretVale，secret version
+keyvault_parts = get_keyvaultparts(sslcert_url)
+print(keyvault_parts)
 secret_bundle = client.get_secret(keyvault_parts[0],keyvault_parts[1],keyvault_parts[2])
 print(secret_bundle)
 
+#下载SSL证书并且并保存到本地存储
 if secret_bundle.content_type == 'application/x-pem-file':
     pemObject = open('output.pem', 'w') 
     pemObject.write(secret_bundle.value)
