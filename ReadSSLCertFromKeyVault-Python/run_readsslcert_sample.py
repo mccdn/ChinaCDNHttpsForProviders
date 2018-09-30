@@ -1,4 +1,5 @@
 import os
+from azure.keyvault.custom.key_vault_id import SecretId
 import json
 import sys
 import adal
@@ -13,24 +14,15 @@ def get_private_key(filename):
         private_pem = pem_file.read()
     return private_pem
 
-#此方法用于提取KeyVault Url的baseurl，secretVale，secret version
-def get_keyvaultparts(secretidentifier):
-    url = urlparse(secretidentifier)
-    keyVaultUrl = url.scheme + "://" + url.netloc
-    vauleVersion = url.path.split('/')
-    if len(vauleVersion) == 4:
-        return keyVaultUrl,vauleVersion[2],vauleVersion[3]
-    elif len(vauleVersion) == 3:
-        return keyVaultUrl,vauleVersion[2],''
-
 """自KeyVault上获取SSL证书的例子."""
 
 #用于读取用来测试的配置数据，此例子中为读取配置文件获取参数信息
 # 以下为Azure CDN Service 调用BindCert 传输的参数示例：
-#{ 
-#“EndpointId”: “cc9706ec-7f99-4df9-83a9-4820931a2552”, 
-#“Certificate”: “https://transit-cdn-cert.vault.azure.cn/certificates/cc9706ec-7f99-4df9-83a9-4820931a2552” 
-#“ClientID”: “5451E51E-7E8D481C-BD44-41E25B580F26” 
+#{
+#“EndpointId”: “cc9706ec-7f99-4df9-83a9-4820931a2552”,
+#“Certificate”:
+#“https://transit-cdn-cert.vault.azure.cn/certificates/cc9706ec-7f99-4df9-83a9-4820931a2552”
+#“ClientID”: “5451E51E-7E8D481C-BD44-41E25B580F26”
 #}
 sample_parameters = {}
 with open('Config.json', 'r') as f:
@@ -41,7 +33,7 @@ sample_parameters = json.loads(parameters)
 client_id = sample_parameters['client_id']
 
 #此字段为CDN供应商AAD证书的Thumbprint
-client_cert_thumbprint =sample_parameters['aad_cert_thumbprint']
+client_cert_thumbprint = sample_parameters['aad_cert_thumbprint']
 
 #此字段为CDN供应商AAD证书的文件路径
 client_cert = get_private_key(sample_parameters['aad_cert_path'])
@@ -62,10 +54,8 @@ auth = KeyVaultAuthentication(adal_callback)
 client = KeyVaultClient(auth)
 
 #获取SSL证书
-#此方法用于提取KeyVault Url的baseurl，secretVale，secret version
-keyvault_parts = get_keyvaultparts(sslcert_url)
-print(keyvault_parts)
-secret_bundle = client.get_secret(keyvault_parts[0],keyvault_parts[1],keyvault_parts[2])
+secretId = SecretId(sslcert_url)
+secret_bundle = client.get_secret(secretId.vault,secretId.name,secretId.version)
 print(secret_bundle)
 
 #下载SSL证书并且并保存到本地存储
