@@ -1,12 +1,12 @@
 import os
-from azure.keyvault.custom.key_vault_id import SecretId
 import json
 import sys
 import adal
 import base64
-from urllib.parse import urlparse
 from azure.keyvault import KeyVaultClient, KeyVaultAuthentication
 from azure.keyvault import KeyVaultId
+from azure.keyvault.custom.key_vault_id import SecretId
+
 
 #此方法用于加载AAD证书（PEM格式）
 def get_private_key(filename):
